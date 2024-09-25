@@ -1,6 +1,6 @@
 # Pseudo Music Service API
 
-This repository contains the source code for the Music Service API, which allows you to manage a music library by adding, updating, retrieving, and deleting songs. It also integrates with a simulated external API for fetching additional song details.
+Repository contains the source code for the Music Service API, that allows you to manage a music library by adding, updating, retrieving, and deleting songs. (Simple CRUD with some filtering logic)
 
 ## Table of Content
 - Installation
