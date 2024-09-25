@@ -17,6 +17,7 @@ type SongRepository interface {
 	DeleteSong(ctx context.Context, songID int) error
 	UpdateSong(ctx context.Context, song domain.Song) error
 	AddSong(ctx context.Context, song domain.Song) error
+	GetSongByID(ctx context.Context, songID int) (*domain.Song, error)
 }
 
 type SongFilter struct {
@@ -173,4 +174,16 @@ func (r *songRepository) AddSong(ctx context.Context, song domain.Song) error {
 
 	r.logger.InfoLogger.Info("Successfully added song", slog.Any("song", song))
 	return nil
+}
+
+func (r *songRepository) GetSongByID(ctx context.Context, songID int) (*domain.Song, error) {
+	query := "SELECT id, group_name, song_name, release_date, text, link FROM songs WHERE id = $1"
+	row := r.db.QueryRowContext(ctx, query, songID)
+
+	var song domain.Song
+	if err := row.Scan(&song.ID, &song.Group, &song.Song, &song.ReleaseDate, &song.Text, &song.Link); err != nil {
+		return nil, err
+	}
+
+	return &song, nil
 }

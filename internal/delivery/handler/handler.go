@@ -119,12 +119,12 @@ func (h *SongHandler) GetSongLyricsPaginated(w http.ResponseWriter, r *http.Requ
 
 // DeleteSong godoc
 // @Summary Delete a song by ID
-// @Description Delete a song from the library.
+// @Description Delete a song from the library and return a status and message.
 // @Tags songs
 // @Accept json
 // @Produce json
 // @Param id path int true "Song ID"
-// @Success 204 "No Content"
+// @Success 200 {object} map[string]string "status and message"
 // @Failure 400 {object} utils.JSONError "Invalid song ID"
 // @Failure 500 {object} utils.JSONError "Failed to delete song"
 // @Router /songs/{id} [delete]
@@ -139,26 +139,28 @@ func (h *SongHandler) DeleteSong(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.songService.DeleteSong(ctx, songID)
-	if err != nil {
+	if err := h.songService.DeleteSong(ctx, songID); err != nil {
 		h.loggers.ErrorLogger.Error("Failed to delete song", utils.Err(err))
 		utils.RespondWithErrorJSON(w, http.StatusInternalServerError, "Failed to delete song")
 		return
 	}
 
 	h.loggers.InfoLogger.Info("Deleted song successfully", slog.Int("songID", songID))
-	w.WriteHeader(http.StatusNoContent)
+	utils.RespondWithJSON(w, http.StatusOK, map[string]string{
+		"status":  "success",
+		"message": "Song deleted successfully",
+	})
 }
 
 // UpdateSong godoc
 // @Summary Update a song's details
-// @Description Update an existing song's details in the library.
+// @Description Update an existing song's details in the library and return the updated song data.
 // @Tags songs
 // @Accept json
 // @Produce json
 // @Param id path int true "Song ID"
 // @Param song body domain.Song true "Updated song"
-// @Success 204 "No Content"
+// @Success 200 {object} domain.Song "Updated song details"
 // @Failure 400 {object} utils.JSONError "Invalid song ID or payload"
 // @Failure 500 {object} utils.JSONError "Failed to update song"
 // @Router /songs/{id} [put]
@@ -188,8 +190,16 @@ func (h *SongHandler) UpdateSong(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	updatedSong, err := h.songService.GetSongByID(ctx, songID)
+	if err != nil {
+		h.loggers.ErrorLogger.Error("Failed to retrieve updated song", utils.Err(err))
+		utils.RespondWithErrorJSON(w, http.StatusInternalServerError, "Failed to retrieve updated song")
+		return
+	}
+
+	// Return the updated song as response
 	h.loggers.InfoLogger.Info("Updated song successfully", slog.Int("songID", songID))
-	w.WriteHeader(http.StatusNoContent)
+	utils.RespondWithJSON(w, http.StatusOK, updatedSong)
 }
 
 // AddSong godoc
@@ -198,8 +208,8 @@ func (h *SongHandler) UpdateSong(w http.ResponseWriter, r *http.Request) {
 // @Tags songs
 // @Accept json
 // @Produce json
-// @Param song body domain.SongRequest true "New song to add"
-// @Success 201 {object} domain.Song
+// @Param song body domain.Song true "New song to add"
+// @Success 201 {object} map[string]interface{} "status and message"
 // @Failure 400 {object} utils.JSONError "Invalid request payload"
 // @Failure 500 {object} utils.JSONError "Failed to add song"
 // @Router /songs [post]
@@ -209,7 +219,7 @@ func (h *SongHandler) AddSong(w http.ResponseWriter, r *http.Request) {
 
 	var song domain.Song
 	if err := json.NewDecoder(r.Body).Decode(&song); err != nil {
-		h.loggers.ErrorLogger.Error("Invalid request payload", utils.Err(err))
+		h.loggers.ErrorLogger.Error("Invalid request payload", slog.Any("error", err))
 		utils.RespondWithErrorJSON(w, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
@@ -221,11 +231,15 @@ func (h *SongHandler) AddSong(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.songService.AddSong(ctx, song); err != nil {
-		h.loggers.ErrorLogger.Error("Failed to add song", utils.Err(err))
+		h.loggers.ErrorLogger.Error("Failed to add song", slog.Any("error", err))
 		utils.RespondWithErrorJSON(w, http.StatusInternalServerError, "Failed to add song")
 		return
 	}
 
+	response := map[string]interface{}{
+		"status":  "success",
+		"message": "Song added successfully",
+	}
 	h.loggers.InfoLogger.Info("Added song successfully", slog.String("group", song.Group), slog.String("song", song.Song))
-	w.WriteHeader(http.StatusCreated)
+	utils.RespondWithJSON(w, http.StatusCreated, response)
 }

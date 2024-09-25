@@ -15,6 +15,7 @@ type SongService interface {
 	DeleteSong(ctx context.Context, songID int) error
 	UpdateSong(ctx context.Context, song domain.Song) error
 	AddSong(ctx context.Context, song domain.Song) error
+	GetSongByID(ctx context.Context, songID int) (*domain.Song, error)
 }
 
 type songService struct {
@@ -92,4 +93,8 @@ func (s *songService) AddSong(ctx context.Context, song domain.Song) error {
 
 	s.logger.InfoLogger.Info("Successfully added song", slog.Any("song", song))
 	return nil
+}
+
+func (s *songService) GetSongByID(ctx context.Context, songID int) (*domain.Song, error) {
+	return s.repo.GetSongByID(ctx, songID)
 }
