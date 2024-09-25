@@ -1,0 +1,209 @@
+basePath: /
+definitions:
+  music-service_internal_domain.Song:
+    properties:
+      group:
+        type: string
+      id:
+        type: integer
+      link:
+        type: string
+      release_date:
+        type: string
+      song:
+        type: string
+      text:
+        type: string
+    type: object
+  music-service_internal_domain.SongRequest:
+    properties:
+      group:
+        type: string
+      song:
+        type: string
+    type: object
+  music-service_pkg_utils.JSONError:
+    properties:
+      message:
+        type: string
+      status:
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: This is a music service API.
+  title: Music Service API
+  version: "1.0"
+paths:
+  /songs:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve songs filtered by group, song name, and/or release date
+        with pagination.
+      parameters:
+      - description: Filter by group name
+        in: query
+        name: group_name
+        type: string
+      - description: Filter by song name
+        in: query
+        name: song_name
+        type: string
+      - description: Filter by release date
+        in: query
+        name: release_date
+        type: string
+      - description: Pagination limit
+        in: query
+        name: limit
+        type: integer
+      - description: Pagination offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/music-service_internal_domain.Song'
+            type: array
+        "500":
+          description: Failed to fetch songs
+          schema:
+            $ref: '#/definitions/music-service_pkg_utils.JSONError'
+      summary: Get songs with optional filtering and pagination
+      tags:
+      - songs
+    post:
+      consumes:
+      - application/json
+      description: Adds a new song to the library.
+      parameters:
+      - description: New song to add
+        in: body
+        name: song
+        required: true
+        schema:
+          $ref: '#/definitions/music-service_internal_domain.SongRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/music-service_internal_domain.Song'
+        "400":
+          description: Invalid request payload
+          schema:
+            $ref: '#/definitions/music-service_pkg_utils.JSONError'
+        "500":
+          description: Failed to add song
+          schema:
+            $ref: '#/definitions/music-service_pkg_utils.JSONError'
+      summary: Add a new song
+      tags:
+      - songs
+  /songs/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a song from the library.
+      parameters:
+      - description: Song ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Invalid song ID
+          schema:
+            $ref: '#/definitions/music-service_pkg_utils.JSONError'
+        "500":
+          description: Failed to delete song
+          schema:
+            $ref: '#/definitions/music-service_pkg_utils.JSONError'
+      summary: Delete a song by ID
+      tags:
+      - songs
+    put:
+      consumes:
+      - application/json
+      description: Update an existing song's details in the library.
+      parameters:
+      - description: Song ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated song
+        in: body
+        name: song
+        required: true
+        schema:
+          $ref: '#/definitions/music-service_internal_domain.Song'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Invalid song ID or payload
+          schema:
+            $ref: '#/definitions/music-service_pkg_utils.JSONError'
+        "500":
+          description: Failed to update song
+          schema:
+            $ref: '#/definitions/music-service_pkg_utils.JSONError'
+      summary: Update a song's details
+      tags:
+      - songs
+  /songs/{id}/lyrics:
+    get:
+      consumes:
+      - application/json
+      description: Get song lyrics paginated by verses.
+      parameters:
+      - description: Song ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Pagination limit
+        in: query
+        name: limit
+        type: integer
+      - description: Pagination offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: string
+            type: array
+        "400":
+          description: Invalid song ID
+          schema:
+            $ref: '#/definitions/music-service_pkg_utils.JSONError'
+        "500":
+          description: Failed to fetch lyrics
+          schema:
+            $ref: '#/definitions/music-service_pkg_utils.JSONError'
+      summary: Get paginated lyrics of a song
+      tags:
+      - songs
+swagger: "2.0"
